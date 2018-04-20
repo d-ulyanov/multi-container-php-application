@@ -1,0 +1,84 @@
+version: "3"
+
+services:
+
+  lb:
+    image: dockercloud/haproxy
+    environment:
+      - BALANCE=leastconn
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8080:80
+    links:
+      - apache:apache
+    depends_on:
+      - apache
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  apache:
+    build:
+      context: ./apache
+    ports:
+      - 80:80
+    environment:
+      - PHP_UPSTREAM=php:9000
+      - EXCLUDE_PORTS=443
+    links:
+      - php:php
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  php:
+    build:
+      context: ./php-fpm
+    links:
+      - redis:redis
+    restart: always
+    ports:
+      - 9000:9000
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:3
+    ports:
+      - 6379:6379
+
+  elasticsearch:
+    build:
+      context: elasticsearch/
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+
+  logstash:
+    build:
+      context: logstash/
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    build:
+      context: kibana/
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config:ro
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
