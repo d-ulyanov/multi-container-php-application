@@ -1,5 +1,7 @@
 # Docker-compose for PHP application infrastructure
 
+![TravisCI](https://travis-ci.org/d-ulyanov/multi-container-php-application.svg?branch=master)
+
 Here you can find PHP application with monitoring and logging.
 
 Infrastructure consist of following services:
