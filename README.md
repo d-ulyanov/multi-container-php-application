@@ -28,3 +28,13 @@ Run stack in swarm:
 ```
 docker stack deploy --compose-file=docker-compose.yml my-php-app
 ```
+
+## Logs in Kibana
+
+If you're runnig your stack locally - open `http://localhost:5601/`
+
+Kibana's UI needs access to ElasticSearch, 
+please add following row to your `/etc/hosts`:
+```
+127.0.0.1	elasticsearch
+```
