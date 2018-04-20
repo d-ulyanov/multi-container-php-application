@@ -9,7 +9,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 8080:80
+      - 80:80
     links:
       - apache:apache
     depends_on:
@@ -22,7 +22,7 @@ services:
     build:
       context: ./apache
     ports:
-      - 80:80
+      - 8080:80
     environment:
       - PHP_UPSTREAM=php:9000
       - EXCLUDE_PORTS=443
