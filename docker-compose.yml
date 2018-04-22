@@ -21,6 +21,9 @@ services:
   apache:
     build:
       context: ./apache
+    volumes:
+      - ./apache/config/apache2.conf:/etc/apache2/apache2.conf:ro
+      - ~/apache-logs:/var/log/apache2:rw
     ports:
       - 8080:80
     environment:
@@ -33,9 +36,20 @@ services:
       restart_policy:
         condition: on-failure
 
+  filebeat:
+    build:
+      context: filebeat/
+    volumes:
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ~/apache-logs:/var/log/apache2:ro
+    depends_on:
+      - apache
+
   php:
     build:
       context: ./php-fpm
+    volumes:
+      - ./php-fpm/php.ini:/usr/local/etc/php/php.ini:ro
     links:
       - redis:redis
     restart: always
