@@ -106,6 +106,7 @@ services:
     depends_on:
       - elasticsearch
     networks:
+      - frontend
       - backend
 
 networks:
