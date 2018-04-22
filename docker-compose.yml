@@ -10,10 +10,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 80:80
-    links:
-      - apache:apache
     depends_on:
       - apache
+    networks:
+      - frontend
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -29,8 +29,9 @@ services:
     environment:
       - PHP_UPSTREAM=php:9000
       - EXCLUDE_PORTS=443
-    links:
-      - php:php
+    networks:
+      - frontend
+      - backend
     deploy:
       replicas: 2
       restart_policy:
@@ -44,24 +45,28 @@ services:
       - ~/apache-logs:/var/log/apache2:ro
     depends_on:
       - apache
+    networks:
+      - backend
 
   php:
     build:
       context: ./php-fpm
     volumes:
       - ./php-fpm/php.ini:/usr/local/etc/php/php.ini:ro
-    links:
-      - redis:redis
     restart: always
     ports:
       - 9000:9000
     depends_on:
       - redis
+    networks:
+      - backend
 
   redis:
     image: redis:3
     ports:
       - 6379:6379
+    networks:
+      - backend
 
   elasticsearch:
     build:
@@ -73,6 +78,8 @@ services:
       - "9300:9300"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - backend
 
   logstash:
     build:
@@ -86,6 +93,8 @@ services:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     depends_on:
       - elasticsearch
+    networks:
+      - backend
 
   kibana:
     build:
@@ -96,3 +105,9 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:
