@@ -29,6 +29,12 @@ Run stack in swarm:
 docker stack deploy --compose-file=docker-compose.yml my-php-app
 ```
 
+## Scaling in docker-compose
+
+```
+docker-compose scale apache=2
+```
+
 ## Logs in Kibana
 
 If you're runnig your stack locally - open `http://localhost:5601/`

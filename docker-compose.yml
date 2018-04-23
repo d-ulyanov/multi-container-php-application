@@ -10,6 +10,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 80:80
+    expose:
+     - "80"
     depends_on:
       - apache
     networks:
@@ -17,6 +19,8 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
 
   apache:
     build:
@@ -25,8 +29,9 @@ services:
       - ./apache/config/apache2.conf:/etc/apache2/apache2.conf:ro
       - ~/apache-logs:/var/log/apache2:rw
     ports:
-      - 8080:80
+      - 8080
     environment:
+      - SERVICE_PORTS=8080
       - PHP_UPSTREAM=php:9000
       - EXCLUDE_PORTS=443
     networks:
@@ -47,6 +52,9 @@ services:
       - apache
     networks:
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   php:
     build:
@@ -60,6 +68,9 @@ services:
       - redis
     networks:
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   redis:
     image: redis:3
@@ -67,6 +78,9 @@ services:
       - 6379:6379
     networks:
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   elasticsearch:
     build:
@@ -80,6 +94,9 @@ services:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   logstash:
     build:
@@ -95,6 +112,9 @@ services:
       - elasticsearch
     networks:
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   kibana:
     build:
@@ -106,9 +126,16 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      - frontend
+      - logs-frontend
       - backend
+    deploy:
+      restart_policy:
+        condition: on-failure
 
 networks:
   frontend:
+    driver: overlay
   backend:
+    driver: overlay
+  logs-frontend:
+    driver: overlay
