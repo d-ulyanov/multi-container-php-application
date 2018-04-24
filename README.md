@@ -17,30 +17,54 @@ Infrastructure consist of following services:
 - Kibana (for logs visualisation)
 - Logstash - logs forwarder to ES
 
-## Run
+## Run via docker-compose
 
 Run stack via docker-compose:
 ```
 docker compose up -d
 ```
 
-Run stack in swarm:
-```
-docker stack deploy --compose-file=docker-compose.yml my-php-app
-```
+Open [http://localhost/]() to see Apache response proxied by HaProxy
 
-## Scaling in docker-compose
+##### Scale out in compose mode:
 
 ```
 docker-compose scale apache=2
 ```
 
+## Run stack in Docker Swarm
+
+Step 0. Init swarm
+```
+docker swarm init
+```
+
+Step 1. Prepare docker images
+```
+$ docker-compose build 
+```
+
+Step 2. Run stack
+```
+$ docker stack deploy --compose-file=docker-compose.yml my-php-app
+```
+
+Open [http://localhost/]() to see Apache response proxied by HaProxy.
+
+PS. If you want to avoid time-lags when Filebeat can't send logs to Logstash,
+because Logstash is running, but still initializing - add [wait-for-it.sh](https://github.com/vishnubob/wait-for-it) to containers.
+
 ## Logs in Kibana
 
-If you're runnig your stack locally - open `http://localhost:5601/`
+If you're runnig your stack locally - open [http://localhost:5601/]()
 
 Kibana's UI needs access to ElasticSearch, 
 please add following row to your `/etc/hosts`:
 ```
 127.0.0.1	elasticsearch
 ```
+
+## Configure Kibana
+
+1. Open "Discover" page and add index pattern `logstash-*`
+2. Reopen "Discover" page to see Apache access & error logs
