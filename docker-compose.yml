@@ -115,6 +115,18 @@ services:
       - logs-frontend
       - backend
 
+  jenkins:
+    build:
+      context: jenkins/
+    image: multi-container-php-application/jenkins
+    volumes:
+      - ./jenkins/jobs:/var/jenkins_home/jobs:rw
+      - ./jenkins/secrets:/var/jenkins_home/secrets:rw
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+
 networks:
   frontend:
   backend:

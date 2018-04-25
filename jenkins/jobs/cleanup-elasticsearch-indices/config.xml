@@ -1,0 +1,93 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Task removes outdated ElasticSearch Logstash indices</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>1 1 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>ELASTICSEARCH=&quot;http://elasticsearch:9200&quot;
+KEEP=30
+GREP=&quot;logstash&quot;
+LOGFILE=/dev/null
+
+# Validate numeric values
+RE_D=&quot;^[0-9]+$&quot;
+
+while getopts &quot;:i:e:g:o:h&quot; flag
+do
+  case &quot;$flag&quot; in
+    h)
+      usage
+      exit 0
+      ;;
+    i)
+      if [[ $OPTARG =~ $RE_D ]]; then
+        KEEP=$OPTARG
+      else
+        ERROR=&quot;${ERROR}Indexes to keep must be an integer.\n&quot;
+      fi
+      ;;
+    e)
+      ELASTICSEARCH=$OPTARG
+      ;;
+    g)
+      GREP=$OPTARG
+      ;;
+    o)
+      LOGFILE=$OPTARG
+      ;;
+    ?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# If we have errors, show the errors with usage data and exit.
+if [ -n &quot;$ERROR&quot; ]; then
+  echo -e $ERROR
+  usage
+  exit 1
+fi
+
+# Get the indices from elasticsearch
+INDICES_TEXT=`curl -s &quot;$ELASTICSEARCH/_cat/indices?v&quot; | awk &apos;/&apos;$GREP&apos;/{match($0, /[:blank]*(&apos;$GREP&apos;.[^ ]+)[:blank]*/, m); print m[1];}&apos; | sort -r`
+
+if [ -z &quot;$INDICES_TEXT&quot; ]; then
+  echo &quot;No indices returned containing &apos;$GREP&apos; from $ELASTICSEARCH.&quot;
+  exit 1
+fi
+
+touch $LOGFILE
+
+# Delete indices
+declare -a INDEX=($INDICES_TEXT)
+if [ ${#INDEX[@]} -gt $KEEP ]; then
+  for index in ${INDEX[@]:$KEEP};do
+    # We don&apos;t want to accidentally delete everything
+    if [ -n &quot;$index&quot; ]; then
+      echo `date &quot;+[%Y-%m-%d %H:%M] &quot;`&quot; Deleting index: $index.&quot; &gt;&gt; $LOGFILE
+      curl -s -XDELETE &quot;$ELASTICSEARCH/$index/&quot; &gt;&gt; $LOGFILE
+    fi
+  done
+fi
+
+exit 0
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

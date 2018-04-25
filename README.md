@@ -68,3 +68,9 @@ please add following row to your `/etc/hosts`:
 
 1. Open "Discover" page and add index pattern `logstash-*`
 2. Reopen "Discover" page to see Apache access & error logs
+
+## Jenkins
+
+Jenkins is accessible here: [http://localhost:8080]()
+
+Password you can find in docker logs from Jenkins (admin:admin)
